@@ -1,0 +1,55 @@
+version: "3.8"
+services:
+  metadata-database:
+    image: postgres:latest
+    restart: always
+    container_name: airflow-metadata-db
+    ports:
+      - "35432:5432"
+    environment:
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-d", "airflow", "-U", "airflow"]
+      timeout: 45s
+      interval: 10s
+      retries: 3
+
+  webserver:
+    image: apache/airflow:2.0.0-python3.6
+    restart: always
+    container_name: airflow-webserver
+    volumes:
+      - ./example_dags:/opt/airflow/dags
+      - ./airflow-init.sh:/opt/airflow/airflow-init.sh
+    ports:
+      - "8080:8080"
+    depends_on:
+      - metadata-database
+    entrypoint: /opt/airflow/airflow-init.sh
+    environment:
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgres+psycopg2://airflow:airflow@airflow-metadata-db:5432/airflow
+    healthcheck:
+      test: [ "CMD", "nc", "-z", "airflow-webserver", "8080" ]
+      timeout: 45s
+      interval: 10s
+      retries: 3
+
+  scheduler:
+    image: apache/airflow:2.0.0-python3.6
+    restart: always
+    container_name: airflow-scheduler
+    command: scheduler
+    volumes:
+      - ./example_dags:/opt/airflow/dags
+    depends_on:
+      - metadata-database
+      - webserver
+    environment:
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgres+psycopg2://airflow:airflow@airflow-metadata-db:5432/airflow
+    healthcheck:
+      test: [ "CMD", "nc", "-z", "airflow-scheduler", "8080" ]
+      timeout: 45s
+      interval: 10s
+      retries: 3
