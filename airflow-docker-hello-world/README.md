@@ -1,3 +1,5 @@
+## About
+
 Apache Airflow is a great tool to programmatically author, schedule, and monitor workflows; however, the initial setup can sometimes be confusing as there are many ways to configure this application. Not to mention that the installation on Windows or MacOS can also be a headache due to the fact that Airflow is primarily written for Linux.
 
 The goal of this project is to utilize [docker-compose](https://docs.docker.com/compose/) and the [official docker image of Airflow](https://hub.docker.com/r/apache/airflow) to provide an easy starting point to experiment with this great tool.
