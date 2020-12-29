@@ -17,39 +17,39 @@ services:
       retries: 3
 
   webserver:
-    image: apache/airflow:2.0.0-python3.6
+    build: ./webserver
+    image: airflow-webserver
     restart: always
     container_name: airflow-webserver
     volumes:
-      - ./example_dags:/opt/airflow/dags
-      - ./airflow-init.sh:/opt/airflow/airflow-init.sh
+      - ./dags:/opt/airflow/dags
+      - ./webserver/init.sh:/opt/airflow/init.sh
+      - ./webserver/logs:/opt/airflow/logs
+      - ./airflow.cfg:/opt/airflow/airflow.cfg
+      - ./unittests.cfg:/opt/airflow/unittests.cfg
+      - ./webserver_config.py:/opt/airflow/webserver_config.py
     ports:
       - "8080:8080"
     depends_on:
       - metadata-database
-    entrypoint: /opt/airflow/airflow-init.sh
+    entrypoint: /opt/airflow/init.sh
     environment:
       - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgres+psycopg2://airflow:airflow@airflow-metadata-db:5432/airflow
-    healthcheck:
-      test: [ "CMD", "nc", "-z", "airflow-webserver", "8080" ]
-      timeout: 45s
-      interval: 10s
-      retries: 3
 
   scheduler:
-    image: apache/airflow:2.0.0-python3.6
+    build: ./scheduler
+    image: airflow-scheduler
     restart: always
     container_name: airflow-scheduler
     command: scheduler
     volumes:
-      - ./example_dags:/opt/airflow/dags
+      - ./dags:/opt/airflow/dags
+      - ./scheduler/logs:/opt/airflow/logs
+      - ./airflow.cfg:/opt/airflow/airflow.cfg
+      - ./unittests.cfg:/opt/airflow/unittests.cfg
+      - ./webserver_config.py:/opt/airflow/webserver_config.py
     depends_on:
       - metadata-database
       - webserver
     environment:
       - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgres+psycopg2://airflow:airflow@airflow-metadata-db:5432/airflow
-    healthcheck:
-      test: [ "CMD", "nc", "-z", "airflow-scheduler", "8080" ]
-      timeout: 45s
-      interval: 10s
-      retries: 3
